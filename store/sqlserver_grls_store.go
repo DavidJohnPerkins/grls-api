@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -69,4 +71,37 @@ func (s *SqlServerGrlsStore) GetModelList(ctx context.Context) ([]Model, error) 
 	}
 
 	return models, nil
+}
+
+func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int64) (ModelExtended, error) {
+	err := s.connect(ctx)
+	if err != nil {
+		return ModelExtended{}, err
+	}
+	defer s.close()
+
+	var model ModelExtended
+	jsonBody := fmt.Sprintf(`{"model_id": %d}`, id)
+
+	r, err := s.dbx.QueryxContext(
+		ctx, `
+		EXEC GRLS.r_model @p_input_json = @json`,
+		sql.Named("json", jsonBody))
+
+	if err != nil {
+		return ModelExtended{}, err
+	}
+	defer r.Close()
+
+	if r.Next() {
+		if err := r.StructScan(&model); err != nil {
+			log.Printf("err1: %v", err)
+
+			return ModelExtended{}, err
+		}
+	} else {
+		//return ModelExtended{}, sql.ErrNoRows
+		return ModelExtended{}, &RecordNotFoundError{id}
+	}
+	return model, nil
 }

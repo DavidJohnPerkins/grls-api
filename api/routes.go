@@ -21,5 +21,8 @@ func (s *Server) routes() {
 	// })
 	s.router.Route("/api/grls", func(r chi.Router) {
 		r.Get("/", s.handleModelList)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", s.handleGetModel)
+		})
 	})
 }

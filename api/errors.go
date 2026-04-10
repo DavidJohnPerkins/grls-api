@@ -22,6 +22,7 @@ func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 
 var (
 	ErrNotFound            = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
+	ErrRecordNotFound      = &ErrResponse{HTTPStatusCode: 404, StatusText: "Record not found."}
 	ErrBadRequest          = &ErrResponse{HTTPStatusCode: 400, StatusText: "Bad request"}
 	ErrInternalServerError = &ErrResponse{HTTPStatusCode: 500, StatusText: "Internal Server Error"}
 )
