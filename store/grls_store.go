@@ -5,18 +5,20 @@ import (
 )
 
 type Model struct {
-	Id               int64  `db:"id"`
+	Id               int    `db:"id"`
 	Is_excluded      bool   `db:"is_excluded"`
 	Sobriquet        string `db:"sobriquet"`
 	Principal_name   string `db:"principal_name"`
 	Hotness_quotient int    `db:"hotness_quotient"`
 	Nationality      string `db:"nationality"`
+	Ranking          string `db:"ranking"`
 	Flags            string `db:"flags"`
 	TH_url           string `db:"TH_url"`
+	Movie_count      int    `db:"movie_count"`
 }
 
 type ModelExtended struct {
-	Id               int64  `db:"id"`
+	Id               int    `db:"id"`
 	Is_excluded      bool   `db:"is_excluded"`
 	Sobriquet        string `db:"sobriquet"`
 	Principal_name   string `db:"principal_name"`
@@ -37,9 +39,21 @@ type ModelExtended struct {
 	AR_url           string `db:"AR_url"`
 }
 
+type Movie struct {
+	Id           int    `db:"id"`
+	Title        string `db:"title"`
+	Comment      string `db:"comment"`
+	Rating       string `db:"rating"`
+	Participants int    `db:"participants"`
+	Flags        string `db:"flags"`
+	Names        string `db:"names"`
+	Image_folder string `db:"image_folder"`
+}
+
 type Interface interface {
-	GetModelList(ctx context.Context) ([]Model, error)
-	GetModel(ctx context.Context, id int64) (ModelExtended, error)
+	GetModelList(ctx context.Context, term string) ([]Model, error)
+	GetModel(ctx context.Context, id int) (ModelExtended, error)
+	GetMovieList(ctx context.Context) ([]Movie, error)
 }
 
 // type Interface interface {

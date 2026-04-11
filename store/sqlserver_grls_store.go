@@ -43,7 +43,7 @@ func (s *SqlServerGrlsStore) close() error {
 	return s.dbx.Close()
 }
 
-func (s *SqlServerGrlsStore) GetModelList(ctx context.Context) ([]Model, error) {
+func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, term string) ([]Model, error) {
 	err := s.connect(ctx)
 	if err != nil {
 		return nil, err
@@ -51,10 +51,12 @@ func (s *SqlServerGrlsStore) GetModelList(ctx context.Context) ([]Model, error) 
 	defer s.close()
 
 	var models []Model
+	jsonBody := fmt.Sprintf(`{"search_term": "%v"}`, term)
+
 	r, err := s.dbx.QueryxContext(
 		ctx, `
-		EXEC GRLS.r_model_card_list '{"model_id": -1}';
-	`)
+		EXEC GRLS.r_model_card_list @p_input_json = @json`,
+		sql.Named("json", jsonBody))
 
 	if err != nil {
 		return nil, err
@@ -73,7 +75,7 @@ func (s *SqlServerGrlsStore) GetModelList(ctx context.Context) ([]Model, error) 
 	return models, nil
 }
 
-func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int64) (ModelExtended, error) {
+func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int) (ModelExtended, error) {
 	err := s.connect(ctx)
 	if err != nil {
 		return ModelExtended{}, err
@@ -104,4 +106,36 @@ func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int64) (ModelExten
 		return ModelExtended{}, &RecordNotFoundError{id}
 	}
 	return model, nil
+}
+
+func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context) ([]Movie, error) {
+	err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.close()
+
+	var movies []Movie
+	var jsonBody = `{"model_id": -1, "search_term": "%", "minimum_rating": 1}`
+
+	r, err := s.dbx.QueryxContext(
+		ctx, `
+		EXEC GRLS.r_movie_list @p_input_json = @json`,
+		sql.Named("json", jsonBody))
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	for r.Next() {
+		var m Movie
+		if err := r.StructScan(&m); err != nil {
+			log.Printf("failed: %v", err)
+			return nil, err
+		}
+		movies = append(movies, m)
+	}
+
+	return movies, nil
 }

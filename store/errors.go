@@ -5,11 +5,11 @@ import (
 )
 
 type DuplicateKeyError struct {
-	Id int64
+	Id int
 }
 
 type RecordNotFoundError struct {
-	Id int64
+	Id int
 }
 
 func (e *DuplicateKeyError) Error() string {

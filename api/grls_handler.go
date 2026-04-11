@@ -5,24 +5,27 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 )
 
 type modelResponse struct {
-	Id               int64  `json:"id"`
+	Id               int    `json:"id"`
 	Is_excluded      bool   `json:"is_excluded"`
 	Sobriquet        string `json:"sobriquet"`
 	Principal_name   string `json:"principal_name"`
 	Hotness_quotient int    `json:"hotness_quotient"`
 	Nationality      string `json:"nationality"`
+	Ranking          string `json:"ranking"`
 	Flags            string `json:"flags"`
 	TH_url           string `json:"th_url"`
+	Movie_count      int    `json:"movie_count"`
 }
 
 type modelExtendedReponse struct {
-	Id               int64  `json:"id"`
+	Id               int    `json:"id"`
 	Is_excluded      bool   `json:"is_excluded"`
 	Sobriquet        string `json:"sobriquet"`
 	Principal_name   string `json:"principal_name"`
@@ -43,6 +46,17 @@ type modelExtendedReponse struct {
 	AR_url           string `json:"AR_url"`
 }
 
+type movieResponse struct {
+	Id           int    `json:"id"`
+	Title        string `json:"title"`
+	Comment      string `json:"comment"`
+	Rating       string `json:"rating"`
+	Participants int    `json:"participants"`
+	Flags        string `json:"flags"`
+	Names        string `json:"names"`
+	Image_folder string `json:"image_folder"`
+}
+
 func NewModelResponse(m store.Model) modelResponse {
 	return modelResponse{
 		Id:               m.Id,
@@ -51,8 +65,10 @@ func NewModelResponse(m store.Model) modelResponse {
 		Principal_name:   m.Principal_name,
 		Hotness_quotient: m.Hotness_quotient,
 		Nationality:      m.Nationality,
+		Ranking:          m.Ranking,
 		Flags:            m.Flags,
 		TH_url:           m.TH_url,
+		Movie_count:      m.Movie_count,
 	}
 }
 
@@ -80,10 +96,34 @@ func NewModelExtendedResponse(m store.ModelExtended) modelExtendedReponse {
 	}
 }
 
+func NewMovieResponse(m store.Movie) movieResponse {
+	return movieResponse{
+		Id:           m.Id,
+		Title:        m.Title,
+		Comment:      m.Comment,
+		Rating:       m.Rating,
+		Participants: m.Participants,
+		Flags:        m.Flags,
+		Names:        m.Names,
+		Image_folder: m.Image_folder,
+	}
+}
+
 func NewModelListResponse(models []store.Model) []render.Renderer {
+
 	list := []render.Renderer{}
 	for _, model := range models {
 		mr := NewModelResponse(model)
+		list = append(list, mr)
+	}
+	return list
+}
+
+func NewMovieListResponse(movies []store.Movie) []render.Renderer {
+
+	list := []render.Renderer{}
+	for _, movie := range movies {
+		mr := NewMovieResponse(movie)
 		list = append(list, mr)
 	}
 	return list
@@ -97,8 +137,20 @@ func (mr modelExtendedReponse) Render(w http.ResponseWriter, r *http.Request) er
 	return nil
 }
 
+func (mr movieResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
 func (s *Server) handleModelList(w http.ResponseWriter, r *http.Request) {
-	models, err := s.store.GetModelList(r.Context())
+
+	termParam := chi.URLParam(r, "term")
+	if termParam == "" {
+		termParam = "%"
+	} else {
+		termParam = strings.Replace(termParam, "~", "%", -1)
+	}
+
+	models, err := s.store.GetModelList(r.Context(), termParam)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerError)
 		return
@@ -108,13 +160,9 @@ func (s *Server) handleModelList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
+
 	idParam := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idParam, 10, 64)
-	//id, err := strconv.Atoi(idParam)
-	//if err != nil {
-	//	render.Render(w, r, ErrBadRequest)
-	//	return
-	//}
+	id, _ := strconv.Atoi(idParam)
 
 	model, err := s.store.GetModel(r.Context(), id)
 	if err != nil {
@@ -127,6 +175,16 @@ func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send the response and STOP
 	render.Render(w, r, NewModelExtendedResponse(model))
+}
+
+func (s *Server) handleMovieList(w http.ResponseWriter, r *http.Request) {
+
+	movies, err := s.store.GetMovieList(r.Context())
+	if err != nil {
+		render.Render(w, r, ErrInternalServerError)
+		return
+	}
+
+	render.RenderList(w, r, NewMovieListResponse(movies))
 }
