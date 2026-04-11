@@ -139,3 +139,66 @@ func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context) ([]Movie, error) 
 
 	return movies, nil
 }
+
+func (s *SqlServerGrlsStore) GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error) {
+	err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.close()
+
+	var desc []AttrDesc
+	var jsonBody = `{"abbrev": "` + attr_abbrev + `"}`
+
+	r, err := s.dbx.QueryxContext(
+		ctx, `
+		EXEC GRLS.r_l2_attribute_list @p_input_json = @json`,
+		sql.Named("json", jsonBody))
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	for r.Next() {
+		var m AttrDesc
+		if err := r.StructScan(&m); err != nil {
+			log.Printf("failed: %v", err)
+			return nil, err
+		}
+		desc = append(desc, m)
+	}
+
+	return desc, nil
+}
+
+func (s *SqlServerGrlsStore) GetFlagList(ctx context.Context, flag_type string) ([]Flag, error) {
+	err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.close()
+
+	var flags []Flag
+	var jsonBody = `{"flag_type": "` + flag_type + `"}`
+
+	r, err := s.dbx.QueryxContext(
+		ctx, `
+		EXEC GRLS.r_flag_list @p_input_json = @json`,
+		sql.Named("json", jsonBody))
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	for r.Next() {
+		var m Flag
+		if err := r.StructScan(&m); err != nil {
+			log.Printf("failed: %v", err)
+			return nil, err
+		}
+		flags = append(flags, m)
+	}
+	return flags, nil
+}

@@ -50,10 +50,20 @@ type Movie struct {
 	Image_folder string `db:"image_folder"`
 }
 
+type AttrDesc struct {
+	L2_desc string `db:"l2_desc"`
+}
+
+type Flag struct {
+	Flag_abbrev string `db:"flag_abbrev"`
+}
+
 type Interface interface {
 	GetModelList(ctx context.Context, term string) ([]Model, error)
 	GetModel(ctx context.Context, id int) (ModelExtended, error)
 	GetMovieList(ctx context.Context) ([]Movie, error)
+	GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error)
+	GetFlagList(ctx context.Context, flag_type string) ([]Flag, error)
 }
 
 // type Interface interface {

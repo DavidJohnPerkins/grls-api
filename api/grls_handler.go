@@ -57,6 +57,14 @@ type movieResponse struct {
 	Image_folder string `json:"image_folder"`
 }
 
+type attrDescResponse struct {
+	L2_desc string `json:"l2_desc"`
+}
+
+type flagResponse struct {
+	Flag_abbrev string `json:"flag_abbrev"`
+}
+
 func NewModelResponse(m store.Model) modelResponse {
 	return modelResponse{
 		Id:               m.Id,
@@ -109,6 +117,18 @@ func NewMovieResponse(m store.Movie) movieResponse {
 	}
 }
 
+func NewAttrDescResponse(m store.AttrDesc) attrDescResponse {
+	return attrDescResponse{
+		L2_desc: m.L2_desc,
+	}
+}
+
+func NewFlagResponse(m store.Flag) flagResponse {
+	return flagResponse{
+		Flag_abbrev: m.Flag_abbrev,
+	}
+}
+
 func NewModelListResponse(models []store.Model) []render.Renderer {
 
 	list := []render.Renderer{}
@@ -129,6 +149,26 @@ func NewMovieListResponse(movies []store.Movie) []render.Renderer {
 	return list
 }
 
+func NewAttrDescListResponse(desc []store.AttrDesc) []render.Renderer {
+
+	list := []render.Renderer{}
+	for _, d := range desc {
+		mr := NewAttrDescResponse(d)
+		list = append(list, mr)
+	}
+	return list
+}
+
+func NewFlagListResponse(desc []store.Flag) []render.Renderer {
+
+	list := []render.Renderer{}
+	for _, d := range desc {
+		mr := NewFlagResponse(d)
+		list = append(list, mr)
+	}
+	return list
+}
+
 func (mr modelResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
@@ -138,6 +178,14 @@ func (mr modelExtendedReponse) Render(w http.ResponseWriter, r *http.Request) er
 }
 
 func (mr movieResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (mr attrDescResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (mr flagResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
@@ -187,4 +235,29 @@ func (s *Server) handleMovieList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.RenderList(w, r, NewMovieListResponse(movies))
+}
+
+func (s *Server) handleAttrDescList(w http.ResponseWriter, r *http.Request) {
+
+	termParam := chi.URLParam(r, "attr_abbrev")
+
+	desc, err := s.store.GetAttrDescList(r.Context(), termParam)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerError)
+		return
+	}
+
+	render.RenderList(w, r, NewAttrDescListResponse(desc))
+}
+
+func (s *Server) handleFlagList(w http.ResponseWriter, r *http.Request) {
+
+	typeParam := chi.URLParam(r, "flag_type")
+	desc, err := s.store.GetFlagList(r.Context(), typeParam)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerError)
+		return
+	}
+
+	render.RenderList(w, r, NewFlagListResponse(desc))
 }

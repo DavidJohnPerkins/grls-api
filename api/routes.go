@@ -28,5 +28,9 @@ func (s *Server) routes() {
 		r.Route("/search/{term}", func(r chi.Router) {
 			r.Get("/", s.handleModelList)
 		})
+		r.Get("/add/flags/{flag_type}", s.handleFlagList)
+		r.Route("/add/attr/{attr_abbrev}", func(r chi.Router) {
+			r.Get("/", s.handleAttrDescList)
+		})
 	})
 }
