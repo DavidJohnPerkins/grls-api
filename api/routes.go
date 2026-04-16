@@ -20,14 +20,16 @@ func (s *Server) routes() {
 	// 	})
 	// })
 	s.router.Route("/api/grls", func(r chi.Router) {
-		r.Get("/", s.handleModelList)
-		r.Route("/{id}", func(r chi.Router) {
+		r.Get("/model", s.handleModelList)
+		r.Route("/model/{id}", func(r chi.Router) {
 			r.Get("/", s.handleGetModel)
 		})
-		r.Route("/search/{term}", func(r chi.Router) {
+		r.Route("/modelsearch/{term}", func(r chi.Router) {
 			r.Get("/", s.handleModelList)
 		})
-
+		r.Route("/model/create", func(r chi.Router) {
+			r.Put("/", s.handleCreateMovie)
+		})
 		//r.Get("/movies/", s.handleMovieList)
 		r.Route("/movies/{model_id}", func(r chi.Router) {
 			r.Get("/", s.handleMovieList)

@@ -64,6 +64,7 @@ type Interface interface {
 	GetMovieList(ctx context.Context, model_id int) ([]Movie, error)
 	GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error)
 	GetFlagList(ctx context.Context, flag_type string) ([]Flag, error)
+	CreateModel(ctx context.Context, jsonString string) error
 }
 
 // type Interface interface {

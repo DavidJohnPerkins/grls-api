@@ -4,16 +4,16 @@ import (
 	"fmt"
 )
 
-type DuplicateKeyError struct {
-	Id int
+type RecordCreationError struct {
+	ErrorText string
 }
 
 type RecordNotFoundError struct {
 	Id int
 }
 
-func (e *DuplicateKeyError) Error() string {
-	return fmt.Sprintf("Duplicate model id: %v", e.Id)
+func (e *RecordCreationError) Error() string {
+	return fmt.Sprintf("Error during model insertion: %v", e.ErrorText)
 }
 
 func (e *RecordNotFoundError) Error() string {

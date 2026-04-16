@@ -3,6 +3,8 @@ package api
 import (
 	"dperkins/grls-api/store"
 	"errors"
+	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -263,4 +265,26 @@ func (s *Server) handleFlagList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.RenderList(w, r, NewFlagListResponse(desc))
+}
+
+func (s *Server) handleCreateMovie(w http.ResponseWriter, r *http.Request) {
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Render(w, r, ErrBadRequest)
+		return
+	}
+	jsonString := string(body)
+
+	if err := s.store.CreateModel(r.Context(), jsonString); err != nil {
+		// DB or SP failure → 500, not 400
+		log.Printf("err: %v", err)
+		render.Render(w, r, ErrInternalServerError)
+		return
+	}
+
+	// Success
+	render.Status(r, http.StatusCreated)
+	w.Write([]byte(`{}`)) // or return the created model if you want
+
 }

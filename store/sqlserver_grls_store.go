@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/microsoft/go-mssqldb"
@@ -233,4 +234,26 @@ func (s *SqlServerGrlsStore) GetFlagList(ctx context.Context, flag_type string) 
 		flags = append(flags, m)
 	}
 	return flags, nil
+}
+
+func (s *SqlServerGrlsStore) CreateModel(ctx context.Context, jsonBody string) error {
+	err := s.connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.close()
+
+	_, err = s.dbx.ExecContext(
+		ctx,
+		`EXEC GRLS.c_model_web @p_input_json = @json`,
+		sql.Named("json", jsonBody))
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key") {
+			return &RecordCreationError{err.Error()}
+		}
+		return err
+	}
+
+	return nil
 }
