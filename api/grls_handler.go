@@ -228,7 +228,10 @@ func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleMovieList(w http.ResponseWriter, r *http.Request) {
 
-	movies, err := s.store.GetMovieList(r.Context())
+	idParam := chi.URLParam(r, "model_id")
+	model_id, _ := strconv.Atoi(idParam)
+
+	movies, err := s.store.GetMovieList(r.Context(), model_id)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerError)
 		return

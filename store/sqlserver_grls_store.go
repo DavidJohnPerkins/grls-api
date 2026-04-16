@@ -108,7 +108,39 @@ func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int) (ModelExtende
 	return model, nil
 }
 
-func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context) ([]Movie, error) {
+// func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context) ([]Movie, error) {
+// 	err := s.connect(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer s.close()
+
+// 	var movies []Movie
+// 	var jsonBody = `{"model_id": -1, "minimum_rating": 1}`
+
+// 	r, err := s.dbx.QueryxContext(
+// 		ctx, `
+// 		EXEC GRLS.r_movie_list @p_input_json = @json`,
+// 		sql.Named("json", jsonBody))
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer r.Close()
+
+// 	for r.Next() {
+// 		var m Movie
+// 		if err := r.StructScan(&m); err != nil {
+// 			log.Printf("failed: %v", err)
+// 			return nil, err
+// 		}
+// 		movies = append(movies, m)
+// 	}
+
+// 	return movies, nil
+// }
+
+func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context, model_id int) ([]Movie, error) {
 	err := s.connect(ctx)
 	if err != nil {
 		return nil, err
@@ -116,7 +148,7 @@ func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context) ([]Movie, error) 
 	defer s.close()
 
 	var movies []Movie
-	var jsonBody = `{"model_id": -1, "search_term": "%", "minimum_rating": 1}`
+	jsonBody := fmt.Sprintf(`{"model_id": %d, "minimum_rating": 1}`, model_id)
 
 	r, err := s.dbx.QueryxContext(
 		ctx, `

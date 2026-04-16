@@ -61,7 +61,7 @@ type Flag struct {
 type Interface interface {
 	GetModelList(ctx context.Context, term string) ([]Model, error)
 	GetModel(ctx context.Context, id int) (ModelExtended, error)
-	GetMovieList(ctx context.Context) ([]Movie, error)
+	GetMovieList(ctx context.Context, model_id int) ([]Movie, error)
 	GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error)
 	GetFlagList(ctx context.Context, flag_type string) ([]Flag, error)
 }
