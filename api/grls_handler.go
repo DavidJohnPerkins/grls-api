@@ -285,6 +285,6 @@ func (s *Server) handleCreateMovie(w http.ResponseWriter, r *http.Request) {
 
 	// Success
 	render.Status(r, http.StatusCreated)
-	w.Write([]byte(`{}`)) // or return the created model if you want
+	render.JSON(w, r, map[string]string{"status": "ok"})
 
 }

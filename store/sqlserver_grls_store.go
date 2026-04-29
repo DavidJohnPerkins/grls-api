@@ -242,7 +242,6 @@ func (s *SqlServerGrlsStore) CreateModel(ctx context.Context, jsonBody string) e
 		return err
 	}
 	defer s.close()
-
 	_, err = s.dbx.ExecContext(
 		ctx,
 		`EXEC GRLS.c_model_web @p_input_json = @json`,

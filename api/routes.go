@@ -7,7 +7,6 @@ import (
 
 func (s *Server) routes() {
 	s.router.Use(render.SetContentType(render.ContentTypeJSON))
-
 	//s.router.Get("/health", s.handleGetHealth)
 
 	// s.router.Route("/api/movies", func(r chi.Router) {
@@ -28,7 +27,7 @@ func (s *Server) routes() {
 			r.Get("/", s.handleModelList)
 		})
 		r.Route("/model/create", func(r chi.Router) {
-			r.Put("/", s.handleCreateMovie)
+			r.Post("/", s.handleCreateMovie)
 		})
 		//r.Get("/movies/", s.handleMovieList)
 		r.Route("/movies/{model_id}", func(r chi.Router) {
