@@ -48,6 +48,12 @@ type modelExtendedReponse struct {
 	AR_url           string `json:"AR_url"`
 }
 
+type modelAssociateReponse struct {
+	Id             int    `json:"id"`
+	Sobriquet      string `json:"sobriquet"`
+	Principal_name string `json:"principal_name"`
+}
+
 type movieResponse struct {
 	Id           int    `json:"id"`
 	Title        string `json:"title"`
@@ -106,6 +112,14 @@ func NewModelExtendedResponse(m store.ModelExtended) modelExtendedReponse {
 	}
 }
 
+func NewModelAssociateResponse(m store.ModelAssociate) modelAssociateReponse {
+	return modelAssociateReponse{
+		Id:             m.Id,
+		Sobriquet:      m.Sobriquet,
+		Principal_name: m.Principal_name,
+	}
+}
+
 func NewMovieResponse(m store.Movie) movieResponse {
 	return movieResponse{
 		Id:           m.Id,
@@ -136,6 +150,16 @@ func NewModelListResponse(models []store.Model) []render.Renderer {
 	list := []render.Renderer{}
 	for _, model := range models {
 		mr := NewModelResponse(model)
+		list = append(list, mr)
+	}
+	return list
+}
+
+func NewModelAssociateListResponse(associates []store.ModelAssociate) []render.Renderer {
+
+	list := []render.Renderer{}
+	for _, associate := range associates {
+		mr := NewModelAssociateResponse(associate)
 		list = append(list, mr)
 	}
 	return list
@@ -176,6 +200,10 @@ func (mr modelResponse) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (mr modelExtendedReponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (mr modelAssociateReponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
@@ -226,6 +254,20 @@ func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Render(w, r, NewModelExtendedResponse(model))
+}
+
+func (s *Server) handleGetModelAssociates(w http.ResponseWriter, r *http.Request) {
+
+	idParam := chi.URLParam(r, "id")
+	id, _ := strconv.Atoi(idParam)
+
+	associates, err := s.store.GetModelAssociateList(r.Context(), id)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerError)
+		return
+	}
+
+	render.RenderList(w, r, NewModelAssociateListResponse(associates))
 }
 
 func (s *Server) handleMovieList(w http.ResponseWriter, r *http.Request) {

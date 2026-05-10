@@ -23,6 +23,9 @@ func (s *Server) routes() {
 		r.Route("/model/{id}", func(r chi.Router) {
 			r.Get("/", s.handleGetModel)
 		})
+		r.Route("/model/associates/{id}", func(r chi.Router) {
+			r.Get("/", s.handleGetModelAssociates)
+		})
 		r.Route("/modelsearch/{term}", func(r chi.Router) {
 			r.Get("/", s.handleModelList)
 		})

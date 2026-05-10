@@ -39,6 +39,12 @@ type ModelExtended struct {
 	AR_url           string `db:"AR_url"`
 }
 
+type ModelAssociate struct {
+	Id             int    `db:"id"`
+	Sobriquet      string `db:"sobriquet"`
+	Principal_name string `db:"principal_name"`
+}
+
 type Movie struct {
 	Id           int    `db:"id"`
 	Title        string `db:"title"`
@@ -61,6 +67,7 @@ type Flag struct {
 type Interface interface {
 	GetModelList(ctx context.Context, term string) ([]Model, error)
 	GetModel(ctx context.Context, id int) (ModelExtended, error)
+	GetModelAssociateList(ctx context.Context, id int) ([]ModelAssociate, error)
 	GetMovieList(ctx context.Context, model_id int) ([]Movie, error)
 	GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error)
 	GetFlagList(ctx context.Context, flag_type string) ([]Flag, error)

@@ -109,6 +109,38 @@ func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int) (ModelExtende
 	return model, nil
 }
 
+func (s *SqlServerGrlsStore) GetModelAssociateList(ctx context.Context, model_id int) ([]ModelAssociate, error) {
+	err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.close()
+
+	var associates []ModelAssociate
+	jsonBody := fmt.Sprintf(`{"model_id": %d}`, model_id)
+
+	r, err := s.dbx.QueryxContext(
+		ctx, `
+		EXEC GRLS.r_model_associate_list @p_input_json = @json`,
+		sql.Named("json", jsonBody))
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	for r.Next() {
+		var m ModelAssociate
+		if err := r.StructScan(&m); err != nil {
+			log.Printf("failed: %v", err)
+			return nil, err
+		}
+		associates = append(associates, m)
+	}
+
+	return associates, nil
+}
+
 // func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context) ([]Movie, error) {
 // 	err := s.connect(ctx)
 // 	if err != nil {
