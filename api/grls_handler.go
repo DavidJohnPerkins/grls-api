@@ -2,7 +2,9 @@ package api
 
 import (
 	"dperkins/grls-api/store"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -220,7 +222,7 @@ func (mr flagResponse) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) handleModelList(w http.ResponseWriter, r *http.Request) {
-
+	fmt.Println(r)
 	termParam := chi.URLParam(r, "term")
 	if termParam == "" {
 		termParam = "%"
@@ -228,7 +230,27 @@ func (s *Server) handleModelList(w http.ResponseWriter, r *http.Request) {
 		termParam = strings.Replace(termParam, "~", "%", -1)
 	}
 
-	models, err := s.store.GetModelList(r.Context(), termParam)
+	flagsParam := r.URL.Query().Get("flags")
+	fmt.Printf("flagsParam: %v", flagsParam)
+
+	flags := []string{}
+	if flagsParam != "" {
+		json.Unmarshal([]byte(flagsParam), &flags)
+	}
+
+	combined := map[string]interface{}{
+		"search_term":  termParam,
+		"search_flags": flags,
+	}
+
+	combinedJSON, err := json.Marshal(combined)
+	if err != nil {
+		log.Println("error marshaling combined JSON:", err)
+	}
+
+	fmt.Println("combinedJSON", string(combinedJSON))
+
+	models, err := s.store.GetModelList(r.Context(), string(combinedJSON))
 	if err != nil {
 		render.Render(w, r, ErrInternalServerError)
 		return

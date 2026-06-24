@@ -44,7 +44,7 @@ func (s *SqlServerGrlsStore) close() error {
 	return s.dbx.Close()
 }
 
-func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, term string) ([]Model, error) {
+func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, searchJSON string) ([]Model, error) {
 	err := s.connect(ctx)
 	if err != nil {
 		return nil, err
@@ -52,12 +52,13 @@ func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, term string) ([]M
 	defer s.close()
 
 	var models []Model
-	jsonBody := fmt.Sprintf(`{"search_term": "%v"}`, term)
+	//jsonBody := fmt.Sprintf(`{"search_term": "%v"}`, searchJSON)
+	fmt.Println("searchJSON", string(searchJSON))
 
 	r, err := s.dbx.QueryxContext(
 		ctx, `
 		EXEC GRLS.r_model_card_list @p_input_json = @json`,
-		sql.Named("json", jsonBody))
+		sql.Named("json", searchJSON))
 
 	if err != nil {
 		return nil, err
