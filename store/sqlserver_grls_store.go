@@ -269,6 +269,36 @@ func (s *SqlServerGrlsStore) GetFlagList(ctx context.Context, flag_type string) 
 	return flags, nil
 }
 
+func (s *SqlServerGrlsStore) GetContactSheet(ctx context.Context, image_list string) ([]ContactSheet, error) {
+	err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.close()
+
+	var cs []ContactSheet
+
+	r, err := s.dbx.QueryxContext(
+		ctx, `
+		EXEC GRLS.r_contact_sheet @p_input_json = @json`,
+		sql.Named("json", image_list))
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	for r.Next() {
+		var c ContactSheet
+		if err := r.StructScan(&c); err != nil {
+			log.Printf("failed: %v", err)
+			return nil, err
+		}
+		cs = append(cs, c)
+	}
+	return cs, nil
+}
+
 func (s *SqlServerGrlsStore) CreateModel(ctx context.Context, jsonBody string) error {
 	err := s.connect(ctx)
 	if err != nil {

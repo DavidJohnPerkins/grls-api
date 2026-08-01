@@ -75,6 +75,11 @@ type flagResponse struct {
 	Flag_abbrev string `json:"flag_abbrev"`
 }
 
+type contactSheetResponse struct {
+	Image_name string `json:"image_name"`
+	Model_id   int    `json:"model_id"`
+}
+
 func NewModelResponse(m store.Model) modelResponse {
 	return modelResponse{
 		Id:               m.Id,
@@ -147,6 +152,13 @@ func NewFlagResponse(m store.Flag) flagResponse {
 	}
 }
 
+func NewContactSheetResponse(m store.ContactSheet) contactSheetResponse {
+	return contactSheetResponse{
+		Image_name: m.Image_name,
+		Model_id:   m.Model_id,
+	}
+}
+
 func NewModelListResponse(models []store.Model) []render.Renderer {
 
 	list := []render.Renderer{}
@@ -197,6 +209,16 @@ func NewFlagListResponse(desc []store.Flag) []render.Renderer {
 	return list
 }
 
+func NewContactSheetListResponse(cs []store.ContactSheet) []render.Renderer {
+
+	list := []render.Renderer{}
+	for _, d := range cs {
+		mr := NewContactSheetResponse(d)
+		list = append(list, mr)
+	}
+	return list
+}
+
 func (mr modelResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
@@ -221,9 +243,13 @@ func (mr flagResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func (mr contactSheetResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
 func (s *Server) handleModelList(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r)
-	termParam := chi.URLParam(r, "term")
+
+	termParam := r.URL.Query().Get("term")
 	if termParam == "" {
 		termParam = "%"
 	} else {
@@ -261,7 +287,7 @@ func (s *Server) handleModelList(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
 
-	idParam := chi.URLParam(r, "id")
+	idParam := r.URL.Query().Get("id")
 	id, _ := strconv.Atoi(idParam)
 
 	model, err := s.store.GetModel(r.Context(), id)
@@ -280,7 +306,7 @@ func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetModelAssociates(w http.ResponseWriter, r *http.Request) {
 
-	idParam := chi.URLParam(r, "id")
+	idParam := r.URL.Query().Get("id")
 	id, _ := strconv.Atoi(idParam)
 
 	associates, err := s.store.GetModelAssociateList(r.Context(), id)
@@ -308,7 +334,7 @@ func (s *Server) handleMovieList(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleAttrDescList(w http.ResponseWriter, r *http.Request) {
 
-	termParam := chi.URLParam(r, "attr_abbrev")
+	termParam := r.URL.Query().Get("attr_abbrev")
 
 	desc, err := s.store.GetAttrDescList(r.Context(), termParam)
 	if err != nil {
@@ -321,7 +347,7 @@ func (s *Server) handleAttrDescList(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleFlagList(w http.ResponseWriter, r *http.Request) {
 
-	typeParam := chi.URLParam(r, "flag_type")
+	typeParam := r.URL.Query().Get("type")
 	desc, err := s.store.GetFlagList(r.Context(), typeParam)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerError)
@@ -329,6 +355,18 @@ func (s *Server) handleFlagList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.RenderList(w, r, NewFlagListResponse(desc))
+}
+
+func (s *Server) handleContactSheet(w http.ResponseWriter, r *http.Request) {
+
+	imageParam := r.URL.Query().Get("images")
+	i, err := s.store.GetContactSheet(r.Context(), imageParam)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerError)
+		return
+	}
+
+	render.RenderList(w, r, NewContactSheetListResponse(i))
 }
 
 func (s *Server) handleCreateMovie(w http.ResponseWriter, r *http.Request) {

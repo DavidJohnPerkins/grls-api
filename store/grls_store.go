@@ -64,6 +64,11 @@ type Flag struct {
 	Flag_abbrev string `db:"flag_abbrev"`
 }
 
+type ContactSheet struct {
+	Image_name string `db:"image_name"`
+	Model_id   int    `db:"model_id"`
+}
+
 type Interface interface {
 	GetModelList(ctx context.Context, term string) ([]Model, error)
 	GetModel(ctx context.Context, id int) (ModelExtended, error)
@@ -71,6 +76,7 @@ type Interface interface {
 	GetMovieList(ctx context.Context, model_id int) ([]Movie, error)
 	GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error)
 	GetFlagList(ctx context.Context, flag_type string) ([]Flag, error)
+	GetContactSheet(ctx context.Context, image_list string) ([]ContactSheet, error)
 	CreateModel(ctx context.Context, jsonString string) error
 }
 
