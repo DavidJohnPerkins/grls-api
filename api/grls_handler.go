@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 )
 
@@ -320,7 +319,7 @@ func (s *Server) handleGetModelAssociates(w http.ResponseWriter, r *http.Request
 
 func (s *Server) handleMovieList(w http.ResponseWriter, r *http.Request) {
 
-	idParam := chi.URLParam(r, "model_id")
+	idParam := r.URL.Query().Get("model_id")
 	model_id, _ := strconv.Atoi(idParam)
 
 	movies, err := s.store.GetMovieList(r.Context(), model_id)
