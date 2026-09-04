@@ -99,8 +99,6 @@ func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int) (ModelExtende
 
 	if r.Next() {
 		if err := r.StructScan(&model); err != nil {
-			log.Printf("err1: %v", err)
-
 			return ModelExtended{}, err
 		}
 	} else {

@@ -291,9 +291,16 @@ func (s *Server) handleGetModel(w http.ResponseWriter, r *http.Request) {
 
 	model, err := s.store.GetModel(r.Context(), id)
 	if err != nil {
+		log.Printf("err: %v", err)
+
 		var rnfErr *store.RecordNotFoundError
 		if errors.As(err, &rnfErr) {
-			render.Render(w, r, ErrRecordNotFound)
+			render.Render(w, r, &ErrResponse{
+				Err:            err,
+				HTTPStatusCode: http.StatusNotFound,
+				StatusText:     "Record not found",
+				ErrorText:      rnfErr.Error(),
+			})
 		} else {
 			render.Render(w, r, ErrInternalServerError)
 		}
