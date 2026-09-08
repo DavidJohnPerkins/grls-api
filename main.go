@@ -17,7 +17,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	store := store.NewSqlServerGrlsStore(cfg.DatabaseURL)
-	server := api.NewServer(cfg.HTTPServer, store)
+	dbx, err := store.InitSharedDB(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to init db: %v", err)
+	}
+
+	grlsStore := store.NewSqlServerGrlsStore(dbx)
+	server := api.NewServer(cfg.HTTPServer, grlsStore)
 	server.Start(ctx)
 }

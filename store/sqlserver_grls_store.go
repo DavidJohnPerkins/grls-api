@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/microsoft/go-mssqldb"
@@ -14,42 +15,57 @@ import (
 const driverName = "sqlserver"
 
 type SqlServerGrlsStore struct {
-	databaseUrl string
-	dbx         *sqlx.DB
+	dbx *sqlx.DB
 }
 
-func NewSqlServerGrlsStore(databaseUrl string) *SqlServerGrlsStore {
-	return &SqlServerGrlsStore{
-		databaseUrl: databaseUrl,
-	}
+func NewSqlServerGrlsStore(dbx *sqlx.DB) *SqlServerGrlsStore {
+	return &SqlServerGrlsStore{dbx: dbx}
 }
+
+// func NewSqlServerGrlsStore(databaseUrl string) *SqlServerGrlsStore {
+// 	return &SqlServerGrlsStore{
+// 		databaseUrl: databaseUrl,
+// 	}
+// }
 
 func noOpMapper(s string) string {
 	return s
 }
 
-func (s *SqlServerGrlsStore) connect(ctx context.Context) error {
-	dbx, err := sqlx.ConnectContext(ctx, driverName, s.databaseUrl)
-	if err != nil {
-		log.Printf("DB connect failed: %v", err)
-		return err
-	}
+// func (s *SqlServerGrlsStore) connect(ctx context.Context) error {
+// 	dbx, err := sqlx.ConnectContext(ctx, driverName, s.databaseUrl)
+// 	if err != nil {
+// 		log.Printf("DB connect failed: %v", err)
+// 		return err
+// 	}
 
-	dbx.MapperFunc(noOpMapper)
-	s.dbx = dbx
-	return nil
-}
+// 	dbx.MapperFunc(noOpMapper)
+// 	s.dbx = dbx
+// 	return nil
+// }
 
 func (s *SqlServerGrlsStore) close() error {
 	return s.dbx.Close()
 }
 
-func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, searchJSON string) ([]Model, error) {
-	err := s.connect(ctx)
+func InitSharedDB(ctx context.Context, databaseURL string) (*sqlx.DB, error) {
+	dbx, err := sqlx.ConnectContext(ctx, driverName, databaseURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect failed: %w", err)
 	}
-	defer s.close()
+
+	dbx.MapperFunc(noOpMapper)
+
+	// Connection pool settings
+	dbx.SetMaxOpenConns(25)
+	dbx.SetMaxIdleConns(10)
+	dbx.SetConnMaxLifetime(5 * time.Minute)
+	dbx.SetConnMaxIdleTime(1 * time.Minute)
+
+	return dbx, nil
+}
+
+func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, searchJSON string) ([]Model, error) {
 
 	var models []Model
 	//jsonBody := fmt.Sprintf(`{"search_term": "%v"}`, searchJSON)
@@ -78,11 +94,6 @@ func (s *SqlServerGrlsStore) GetModelList(ctx context.Context, searchJSON string
 }
 
 func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int) (ModelExtended, error) {
-	err := s.connect(ctx)
-	if err != nil {
-		return ModelExtended{}, err
-	}
-	defer s.close()
 
 	var model ModelExtended
 	jsonBody := fmt.Sprintf(`{"model_id": %d}`, id)
@@ -109,11 +120,6 @@ func (s *SqlServerGrlsStore) GetModel(ctx context.Context, id int) (ModelExtende
 }
 
 func (s *SqlServerGrlsStore) GetModelAssociateList(ctx context.Context, model_id int) ([]ModelAssociate, error) {
-	err := s.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer s.close()
 
 	var associates []ModelAssociate
 	jsonBody := fmt.Sprintf(`{"model_id": %d}`, model_id)
@@ -173,11 +179,6 @@ func (s *SqlServerGrlsStore) GetModelAssociateList(ctx context.Context, model_id
 // }
 
 func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context, model_id int) ([]Movie, error) {
-	err := s.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer s.close()
 
 	var movies []Movie
 	jsonBody := fmt.Sprintf(`{"model_id": %d, "minimum_rating": 1}`, model_id)
@@ -205,11 +206,6 @@ func (s *SqlServerGrlsStore) GetMovieList(ctx context.Context, model_id int) ([]
 }
 
 func (s *SqlServerGrlsStore) GetAttrDescList(ctx context.Context, attr_abbrev string) ([]AttrDesc, error) {
-	err := s.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer s.close()
 
 	var desc []AttrDesc
 	var jsonBody = `{"abbrev": "` + attr_abbrev + `"}`
@@ -237,11 +233,6 @@ func (s *SqlServerGrlsStore) GetAttrDescList(ctx context.Context, attr_abbrev st
 }
 
 func (s *SqlServerGrlsStore) GetFlagList(ctx context.Context, flag_type string) ([]Flag, error) {
-	err := s.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer s.close()
 
 	var flags []Flag
 	var jsonBody = `{"flag_type": "` + flag_type + `"}`
@@ -268,11 +259,6 @@ func (s *SqlServerGrlsStore) GetFlagList(ctx context.Context, flag_type string) 
 }
 
 func (s *SqlServerGrlsStore) GetContactSheet(ctx context.Context, image_list string) ([]ContactSheet, error) {
-	err := s.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer s.close()
 
 	var cs []ContactSheet
 
@@ -298,12 +284,8 @@ func (s *SqlServerGrlsStore) GetContactSheet(ctx context.Context, image_list str
 }
 
 func (s *SqlServerGrlsStore) CreateModel(ctx context.Context, jsonBody string) error {
-	err := s.connect(ctx)
-	if err != nil {
-		return err
-	}
-	defer s.close()
-	_, err = s.dbx.ExecContext(
+
+	_, err := s.dbx.ExecContext(
 		ctx,
 		`EXEC GRLS.c_model_web @p_input_json = @json`,
 		sql.Named("json", jsonBody))
